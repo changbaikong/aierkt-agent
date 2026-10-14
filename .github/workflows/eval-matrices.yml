@@ -1,0 +1,55 @@
+name: eval-matrices
+
+# 7 套提示词测试矩阵的 CI。
+# 套 1-6 单元部分每 commit 跑（无 API key 依赖）；套 5/6/7 LLM 部分走 gated job
+# （仅当 secrets 含 OPENAI_API_KEY 才触发，避免公共 fork 泄露/计费）。
+# 项目当前无 CI（手动跑），此 yaml 为方案落点，推 GitHub 后自动激活。
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  unit-matrices:
+    name: 单元矩阵（套1-6，无 LLM）
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 安装依赖
+        run: python -m pip install -r requirements.txt
+      - name: 跑单元矩阵（全新 basetemp 规避 safe-delete 闸门）
+        shell: bash
+        run: |
+          BASETEMP=$(python -c "import tempfile; print(tempfile.mkdtemp(prefix='ci-matrix-'))")
+          python -m pytest tests/matrices/ -m matrix -c pytest.ini --basetemp="$BASETEMP" -q --tb=short
+
+  llm-matrices:
+    name: LLM 矩阵（套5-7，gated）
+    runs-on: windows-latest
+    needs: unit-matrices
+    if: ${{ secrets.OPENAI_API_KEY != '' }}
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 安装依赖
+        run: python -m pip install -r requirements.txt
+      - name: 跑统一 runner（含 LLM）
+        shell: bash
+        run: |
+          python evals/run_all_matrices.py --python "$(which python)"
+      - name: 上传结果
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: matrix-results
+          path: evals/results/

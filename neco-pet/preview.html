@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>猫姬动作预览工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 32px;
+        }
+
+        .controls {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: inline-block;
+            width: 120px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        select, input {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .preview-area {
+            background: #fafafa;
+            border: 3px dashed #ddd;
+            border-radius: 10px;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            position: relative;
+        }
+
+        #canvas {
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            background: white;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .info-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .info-panel p {
+            margin: 5px 0;
+            color: #666;
+        }
+
+        .info-panel strong {
+            color: #333;
+        }
+
+        .action-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            padding: 8px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .action-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .loading {
+            color: #667eea;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐱 猫姬动作预览工具</h1>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>选择动作ID：</label>
+                <select id="actionSelect"></select>
+                <button onclick="playAnimation()">播放动画</button>
+                <button onclick="stopAnimation()">停止</button>
+            </div>
+
+            <div class="control-group">
+                <label>播放速度：</label>
+                <input type="range" id="fpsRange" min="5" max="60" value="24" step="1">
+                <span id="fpsValue">24 FPS</span>
+            </div>
+
+            <div class="control-group">
+                <label>缩放比例：</label>
+                <input type="range" id="scaleRange" min="10" max="100" value="20" step="5">
+                <span id="scaleValue">20%</span>
+            </div>
+
+            <div class="control-group">
+                <label>循环播放：</label>
+                <input type="checkbox" id="loopCheck" checked>
+            </div>
+        </div>
+
+        <div class="preview-area">
+            <canvas id="canvas"></canvas>
+            <div class="info-panel">
+                <p><strong>当前动作：</strong><span id="currentAction">未选择</span></p>
+                <p><strong>总帧数：</strong><span id="frameCount">0</span></p>
+                <p><strong>当前帧：</strong><span id="currentFrame">0</span></p>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 30px; color: #333;">快速选择动作：</h3>
+        <div class="action-list" id="actionList"></div>
+    </div>
+
+    <script src="images_list.js"></script>
+    <script>
+        // 动画数据
+        const animations = {};
+        let currentAnimation = null;
+        let animationFrameId = null;
+        let currentFrameIndex = 0;
+        let lastFrameTime = 0;
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const actionSelect = document.getElementById('actionSelect');
+        const fpsRange = document.getElementById('fpsRange');
+        const fpsValue = document.getElementById('fpsValue');
+        const scaleRange = document.getElementById('scaleRange');
+        const scaleValue = document.getElementById('scaleValue');
+        const loopCheck = document.getElementById('loopCheck');
+
+        // 更新FPS显示
+        fpsRange.addEventListener('input', () => {
+            fpsValue.textContent = fpsRange.value + ' FPS';
+        });
+
+        // 更新缩放显示
+        scaleRange.addEventListener('input', () => {
+            scaleValue.textContent = scaleRange.value + '%';
+            updateCanvasSize();
+        });
+
+        // 初始化：加载所有动作
+        async function init() {
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = 'loading';
+            loadingMsg.textContent = '正在加载图片资源...';
+            document.querySelector('.preview-area').appendChild(loadingMsg);
+
+            // 扫描assets目录下的所有图片
+            const imageFiles = await scanImages();
+
+            // 按动作ID分组
+            imageFiles.forEach(file => {
+                const match = file.match(/(\d+)_(\w+)_(\d+)\.png/);
+                if (match) {
+                    const actionId = match[2];
+                    const frameNum = parseInt(match[3]);
+
+                    if (!animations[actionId]) {
+                        animations[actionId] = [];
+                    }
+                    animations[actionId].push({
+                        file: file,
+                        frameNum: frameNum
+                    });
+                }
+            });
+
+            // 对每个动作的帧排序
+            Object.keys(animations).forEach(actionId => {
+                animations[actionId].sort((a, b) => a.frameNum - b.frameNum);
+            });
+
+            // 填充选择框
+            const sortedActions = Object.keys(animations).sort();
+            sortedActions.forEach(actionId => {
+                const option = document.createElement('option');
+                option.value = actionId;
+                option.textContent = `动作 ${actionId} (${animations[actionId].length} 帧)`;
+                actionSelect.appendChild(option);
+            });
+
+            // 创建快速选择按钮
+            const actionList = document.getElementById('actionList');
+            sortedActions.forEach(actionId => {
+                const btn = document.createElement('button');
+                btn.className = 'action-btn';
+                btn.textContent = actionId;
+                btn.onclick = () => {
+                    actionSelect.value = actionId;
+                    playAnimation();
+                    document.querySelectorAll('.action-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                };
+                actionList.appendChild(btn);
+            });
+
+            loadingMsg.remove();
+
+            // 默认播放第一个动作
+            if (sortedActions.length > 0) {
+                actionSelect.value = sortedActions[0];
+                playAnimation();
+            }
+        }
+
+        // 扫描图片文件（这里需要手动列出，因为浏览器无法直接读取文件系统）
+        async function scanImages() {
+            // 这个列表将由后端生成
+            return IMAGES_LIST;
+        }
+
+        // 播放动画
+        async function playAnimation() {
+            stopAnimation();
+
+            const actionId = actionSelect.value;
+            if (!actionId || !animations[actionId]) {
+                alert('请选择一个有效的动作！');
+                return;
+            }
+
+            currentAnimation = animations[actionId];
+            currentFrameIndex = 0;
+
+            // 预加载所有帧
+            const images = await Promise.all(
+                currentAnimation.map(frame => {
+                    return new Promise((resolve, reject) => {
+                        const img = new Image();
+                        img.onload = () => resolve(img);
+                        img.onerror = reject;
+                        img.src = 'assets/' + frame.file;
+                    });
+                })
+            );
+
+            currentAnimation = images;
+
+            // 更新信息
+            document.getElementById('currentAction').textContent = actionId;
+            document.getElementById('frameCount').textContent = images.length;
+
+            // 设置画布大小
+            updateCanvasSize();
+
+            // 开始播放
+            lastFrameTime = performance.now();
+            animate();
+        }
+
+        // 停止动画
+        function stopAnimation() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            currentFrameIndex = 0;
+        }
+
+        // 更新画布大小
+        function updateCanvasSize() {
+            if (currentAnimation && currentAnimation.length > 0) {
+                const scale = scaleRange.value / 100;
+                const img = currentAnimation[0];
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+            }
+        }
+
+        // 动画循环
+        function animate(timestamp) {
+            if (!currentAnimation || currentAnimation.length === 0) return;
+
+            const fps = parseInt(fpsRange.value);
+            const frameDuration = 1000 / fps;
+
+            if (timestamp - lastFrameTime >= frameDuration) {
+                // 清空画布
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // 绘制当前帧
+                const img = currentAnimation[currentFrameIndex];
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                // 更新信息
+                document.getElementById('currentFrame').textContent = currentFrameIndex + 1;
+
+                // 下一帧
+                currentFrameIndex++;
+                if (currentFrameIndex >= currentAnimation.length) {
+                    if (loopCheck.checked) {
+                        currentFrameIndex = 0;
+                    } else {
+                        stopAnimation();
+                        return;
+                    }
+                }
+
+                lastFrameTime = timestamp;
+            }
+
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

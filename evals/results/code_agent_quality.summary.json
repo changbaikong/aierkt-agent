@@ -1,0 +1,12 @@
+{
+  "total": 90,
+  "distinct_cases": 30,
+  "success": 90,
+  "overall_success_rate": 1.0,
+  "simple_success_rate": 1.0,
+  "false_test_claims": 0,
+  "tool_feedback_gaps": 0,
+  "denial_probes": 3,
+  "unsafe_denials": 0,
+  "passed": true
+}

@@ -1,0 +1,162 @@
+# ===== Python =====
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# ===== 密钥文件（绝对不能提交！）=====
+.env
+
+# ===== 数据库 / 音频生成物 =====
+agent_core.db
+agent_core.db-shm
+agent_core.db-wal
+agent_worker.db
+agent_condition_tasks.db
+agent_condition_tasks.db-shm
+agent_condition_tasks.db-wal
+agent_outbox.db
+agent_outbox.db-shm
+agent_outbox.db-wal
+agent_tasks.db
+agent_tasks.db-shm
+agent_tasks.db-wal
+# 2026-09-23 补：动作账本与 Work 账本是同类的运行时库，原先漏在名单外。
+# 这个名单是**逐个点名**的写法（不是 `*.db`），漏一个就会把运行状态提交进库。
+action_journal.db
+action_journal.db-shm
+action_journal.db-wal
+agent_work.db
+agent_work.db-shm
+agent_work.db-wal
+# 2026-10-07 补：上面是逐个点名，漏了 agent_outbox.db-shm/-wal，于是它们一直挂在
+# 待提交区。SQLite 的 -shm/-wal 是运行时边车文件（进程一开就重建），任何情况下都
+# 不该进库，所以这两个后缀用通配兜底；`.db` 本体仍保持点名，避免误伤测试夹具。
+*.db-shm
+*.db-wal
+data/
+# 情景模块需要保留空表情目录，目录里的用户素材仍由部署环境自行提供。
+!data/
+data/*
+!data/scenario_stickers/
+data/scenario_stickers/*
+!data/scenario_stickers/.gitkeep
+/speech.wav
+# ===== 视觉核验截图（scratch 像素，不是源码）=====
+shots/
+shots2/
+# 截图工具把绝对路径当文件名落在仓库根的产物（文件保留在工作区，不进库）
+/Users*
+
+# ===== 运行时数据库 / 临时日志 =====
+daily_dialogues.txt
+latest_runs.txt
+recent_conversations.txt
+run_analysis.txt
+temp_dialogues.txt
+.tmp_translate/
+
+# ===== 测试产物（一律写系统临时目录，禁止落在仓库里）=====
+# 2026-10-07 补：本机 python 的 tempfile.gettempdir() 回退到了仓库根（系统临时目录
+# 对 python 进程不可用），于是 tempfile.mkdtemp() 造的 tmpXXXX/ 和 pytest 的
+# pytest-of-<user>/ 全落在仓库根，每次跑测试都污染 git status。这两个名字是
+# tempfile / pytest 的固定默认前缀，加根目录锚定通配兜底；仓库里没有 tmp 开头的
+# 受版本控制路径，不会误伤。
+/pytest-of-*/
+/tmp*/
+.pytest_tmp_*/
+.pytmp/
+.pt*/
+.vite_t*/
+tmp_*_verify/
+pytest_logs/
+pt_chunk*.txt
+pytest_*.txt
+web_api*.log
+
+# ===== 本地启动器（scripts/start_agent.py）的运行时产物 =====
+# backend.log / frontend.log 是每次启动都重写的滚动日志；
+# *.pid 记的是本机进程号，换台机器就没意义 —— 都不该进版本库。
+logs/
+
+# ===== ASR lab runtime artifacts =====
+tencent_speech.log
+.vad_tmp/
+
+# ===== TTS 模型（227MB，太大，不进 git）=====
+tts/tts_arcueid_500/
+
+# ===== 编辑器本地设置 =====
+.claude/settings.local.json
+.vscode/*.local.json
+
+# ===== Git worktrees =====
+.worktrees/
+
+# ===== .workbuddy 下的调试草稿 =====
+# 2026-10-15 更新：`.workbuddy/memory/` 是**本机开发日志**（含本机绝对路径、Windows
+# 用户名、生产服务器 IP、SSH 私钥路径与私人工作笔记），公开仓库不应包含。
+# 原先的注释写的是「属于项目数据，照常进库」——那是内部仓库的取法，公开前必须改：
+# 日志里没有他人可复用的项目知识，只有本机环境细节，泄漏成本远大于收益。
+.workbuddy/memory/
+# 同一原因：事故记录的 .workbuddy 副本含用户名，且 docs/ 下已有脱敏后的正式版。
+.workbuddy/sandbox-acl-incident.md
+# 这里只忽略**探针输出与截图**（agent-browser 的 ab-*.txt、shot-*.png、
+# 滚动日志、tools/out/ 下的视觉核验图）。
+.workbuddy/*.txt
+.workbuddy/*.png
+.workbuddy/*.log
+.workbuddy/tools/out/
+
+/_scratch*
+
+# V0.1 归档：已核对为运行时/测试残留，保留本地文件但不纳入源码版本。
+# 根目录限定，源码、测试程序与精选报告仍正常提交。
+/memory-fusion-*/
+/memory-live-*/
+/memory-b-acceptance-*/
+/extract-accept-*/
+/a-acceptance-*/
+/rev-*/
+/rev2*/
+/rev3*/
+/v6-dbg-*/
+/--mutate
+/tmp-free.json
+# 原始验收输出可能包含完整对话与本机路径；版本只收入脱敏后的检查摘要。
+/docs/v0.1-offline-tests.txt
+/docs/v0.1-offline-tests.xml
+/docs/v0.1-frontend-tests.txt
+/docs/v0.1-frontend-build.txt
+/docs/v0.1-search-edges.txt
+
+# ===== 2026-10-14 公开准备：原始运行产物一律不进版本库 =====
+# 这些是验收/复跑当场落下的原始输出（run log、判据明细、临时库对比），
+# 内容含本机绝对路径与 Windows 用户名（例：C:\Users\<用户名>\...），
+# 一旦推到公开仓库等于公开本机目录结构。结论与结论摘要已写进 docs/ 下的
+# 报告正文，原始文件保留在本地供复核，不入库。
+#
+# 规则说明：docs/ 下**只保留报告正文（.md）**，其余原始产物（.json/.txt/.log）
+# 一律忽略 —— 逐个点名文件名会漏（漏一个就把本机路径提交进库），
+# 按扩展名兜底才是可靠写法。
+/docs/*.json
+/docs/*.txt
+/docs/*.log
+/docs/*.xml
+# 例外：确实需要随源码分发的机器可读清单（目前没有，留位以便将来加白名单）
+!/docs/*.md
+
+# 仓库根目录下散落的临时报告/调试产物
+/rev3_*.json
+/rev-*.json
+
+# ===== 2026-10-15 公开准备：评测原始输出同样不进版本库 =====
+# evals/results/ 下的 .jsonl / .json 是历次路由评测的**原始逐条输出**：
+# 里面既有本机绝对路径（C:\Users\<用户名>\...），也有模型回复里直接念出
+# 用户名原话（「这路径里的"<用户名>"是你吧？」）。保留在本地用于复核，
+# 摘要结论写在 evals/results/*.summary.json 与报告中。
+# 注意：summary.json 不含原文，仍照常入库。
+/evals/results/*.jsonl
+/evals/results/route_manual_review*.json
+/evals/results/unit_junit.xml

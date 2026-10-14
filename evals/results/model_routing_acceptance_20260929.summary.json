@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-09-29T01:23:35",
+  "model": "deepseek-flash",
+  "case_count": 62,
+  "distinct_cases": 62,
+  "repeats": 3,
+  "complete": true,
+  "total": 186,
+  "correct": 173,
+  "overall_accuracy": 0.9301,
+  "code_agent_cases": 36,
+  "code_agent_recall": 1.0,
+  "persistent_false_positives": 0,
+  "approval_bypasses": 0,
+  "unknown_tool_calls": 0,
+  "guessed_project_roots": 0,
+  "passed": false
+}

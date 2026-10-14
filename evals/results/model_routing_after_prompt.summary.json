@@ -1,0 +1,12 @@
+{
+  "total": 180,
+  "correct": 169,
+  "overall_accuracy": 0.9389,
+  "code_agent_cases": 36,
+  "code_agent_recall": 1.0,
+  "persistent_false_positives": 0,
+  "approval_bypasses": 0,
+  "unknown_tool_calls": 0,
+  "guessed_project_roots": 0,
+  "passed": false
+}

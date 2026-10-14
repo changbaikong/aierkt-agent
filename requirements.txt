@@ -1,0 +1,26 @@
+httpx>=0.27,<1
+python-dotenv>=1.0,<2
+fastapi
+uvicorn[standard]
+httpx
+pydantic
+qdrant-client
+pycryptodome
+rich>=13,<15
+croniter>=2,<7
+python-multipart>=0.0.9,<1
+pypdf>=5,<7
+# IANA 时区数据库：Windows 不自带 tz 数据，zoneinfo.ZoneInfo() 依赖此包。
+# 项目内 task_service.py / condition_tasks.py / chat_cli.py 均使用 ZoneInfo，
+# 缺少该包时上述模块在 Windows 上会抛 ZoneInfoNotFoundError。
+tzdata; platform_system == "Windows"
+# 动作参数的 JSON Schema 校验（agent_core/actions.py 的 _validate_arguments）。
+# 它此前只是别的包的传递依赖，能被装上纯属运气 —— 一旦上游调整依赖树，
+# 校验就会**静默跳过**（网关里那条 except ImportError 会放行），
+# 表现为"畸形参数不再被拦"。所以显式钉住，不再依赖别人替我带上。
+jsonschema>=4,<5
+# Optional Windows master-volume backend
+pycaw; platform_system == "Windows"
+comtypes; platform_system == "Windows"
+# Windows AppContainer、ACL 和 Job Object 封装；阶段 1 固定使用 312 系列。
+pywin32>=312,<313; platform_system == "Windows"

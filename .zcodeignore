@@ -1,0 +1,120 @@
+# ===== Python =====
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# ===== 密钥文件（绝对不能提交！）=====
+.env
+
+# ===== 数据库 / 音频生成物 =====
+agent_core.db
+agent_core.db-shm
+agent_core.db-wal
+agent_worker.db
+agent_condition_tasks.db
+agent_condition_tasks.db-shm
+agent_condition_tasks.db-wal
+agent_outbox.db
+agent_tasks.db
+agent_tasks.db-shm
+agent_tasks.db-wal
+# 2026-09-23 补：动作账本与 Work 账本是同类的运行时库，原先漏在名单外。
+# 这个名单是**逐个点名**的写法（不是 `*.db`），漏一个就会把运行状态提交进库。
+action_journal.db
+action_journal.db-shm
+action_journal.db-wal
+agent_work.db
+agent_work.db-shm
+agent_work.db-wal
+data/
+# 情景模块需要保留空表情目录，目录里的用户素材仍由部署环境自行提供。
+!data/
+data/*
+!data/scenario_stickers/
+data/scenario_stickers/*
+!data/scenario_stickers/.gitkeep
+/speech.wav
+# ===== 视觉核验截图（scratch 像素，不是源码）=====
+shots/
+shots2/
+# 截图工具把绝对路径当文件名落在仓库根的产物（文件保留在工作区，不进库）
+/Users*
+
+# ===== 运行时数据库 / 临时日志 =====
+daily_dialogues.txt
+latest_runs.txt
+recent_conversations.txt
+run_analysis.txt
+temp_dialogues.txt
+.tmp_translate/
+
+# ===== 测试产物（一律写系统临时目录，禁止落在仓库里）=====
+.pytest_tmp_*/
+.pytmp/
+.pt*/
+.vite_t*/
+tmp_*_verify/
+pytest_logs/
+pt_chunk*.txt
+pytest_*.txt
+web_api*.log
+
+# ===== 本地启动器（scripts/start_agent.py）的运行时产物 =====
+# backend.log / frontend.log 是每次启动都重写的滚动日志；
+# *.pid 记的是本机进程号，换台机器就没意义 —— 都不该进版本库。
+logs/
+
+# ===== ASR lab runtime artifacts =====
+tencent_speech.log
+.vad_tmp/
+
+# ===== TTS 模型（227MB，太大，不进 git）=====
+tts/tts_arcueid_500/
+
+# ===== 编辑器本地设置 =====
+.claude/settings.local.json
+.vscode/*.local.json
+
+# ===== Git worktrees =====
+.worktrees/
+
+# ===== .workbuddy 下的调试草稿 =====
+# 这里只忽略**探针输出与截图**（agent-browser 的 ab-*.txt、shot-*.png、
+# 滚动日志、tools/out/ 下的视觉核验图）；`.workbuddy/memory/` 是三层记忆，
+# 属于项目数据，**照常进库**。
+.workbuddy/*.txt
+.workbuddy/*.png
+.workbuddy/*.log
+.workbuddy/tools/out/
+
+# ===== ↑ 以上同步自 .gitignore（「从 .gitignore 同步」只重写以上部分）=====
+.git/
+.hg/
+.svn/
+node_modules/
+bower_components/
+jspm_packages/
+site-packages/
+coverage/
+htmlcov/
+lcov-report/
+cmakefiles/
+cmake-build-*/
+bazel-*/
+pods/
+deriveddata/
+storybook-static/
+playwright-report/
+test-results/
+allure-results/
+allure-report/
+cdk.out/
+*.dist-info/
+eggs/
+pip-wheel-metadata/
+wheels/
+# ----- ↑ 以上为 ZCode 默认排除规则（自定义规则请写在本行下方，不会被同步/恢复改动）-----
+# 自定义规则写在下方（本行提示可删除）
+/_scratch*
